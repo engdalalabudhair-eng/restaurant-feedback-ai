@@ -1,0 +1,334 @@
+{
+  "name": "restaurant-feedback-ai.",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Restaurant-Feed Back",
+        "formDescription": "Thank you for visiting us! Hope you have enjoyed your meal",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Customer Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Rate",
+              "fieldType": "number",
+              "placeholder": "Enter a the rate (1,2,...,5)",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "FeedBack",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1a79ded5-4741-468a-a4fa-429b79963ddf",
+      "name": "On form submission",
+      "webhookId": "2baec8c0-03e9-4292-ac1b-85f05e3d60d8"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// Restaurant Feedback AI Analyzer\n// Data Preparation Node\n// ============================================\n\n// Get data from Google Form\nconst customerName = $json[\"Customer Name\"] ?? $json[\"Customer_Name\"];\nconst email = $json[\"Email\"];\nconst rate = Number($json[\"Rate\"]);\nconst feedback = $json[\"FeedBack\"] ?? $json[\"Feedback\"];\n\n// Validate required fields\nif (!customerName) {\n  throw new Error(\"Customer Name is required.\");\n}\n\nif (!email) {\n  throw new Error(\"Email is required.\");\n}\n\nif (!Number.isInteger(rate) || rate < 1 || rate > 5) {\n  throw new Error(\"Rate must be an integer between 1 and 5.\");\n}\n\n\n// Clean feedback\nconst cleanFeedback = feedback.trim();\n typeof feedback === \"string\" ? feedback.trim() : \"\";\n\n// Count words\nconst wordCount = cleanFeedback\n  ? cleanFeedback.split(/\\s+/).length\n  : 0;\n\n// Prepare data for AI analysis\nconst analysisInput = {\n  customer_name: customerName,\n  email: email,\n  rate: rate,\n  feedback: cleanFeedback,\n  word_count: wordCount\n};\n\n// Return clean structured data\nreturn [\n  {\n    json: {\n      Customer_Name: customerName,\n      Email: email,\n      Rate: rate,\n      FeedBack: cleanFeedback,\n      Word_Count: wordCount,\n\n      Analysis_Input: JSON.stringify(analysisInput)\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "6147da71-8248-44a8-bce1-f903752def07",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.Analysis_Input }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an AI-powered Restaurant Customer Feedback Analysis System.  Your role is to analyze customer feedback submitted through the restaurant feedback form and convert it into structured, consistent data for storage in a database or Google Sheets.  You must analyze the following aspects:  1. Sentiment Determine the overall sentiment of the customer's feedback.  Allowed values: - Positive - Neutral - Negative  2. Category Identify the main topic of the feedback.  Allowed examples: - Food Quality - Service - Staff - Delivery - Price - Cleanliness - Atmosphere - Waiting Time - Other  If the feedback does not clearly belong to another category, use \"Other\".  3. Priority Determine how urgently the restaurant should address the feedback.  Allowed values: - Low - Medium - High  Use High when the feedback describes a serious customer problem, repeated major failure, safety concern, or issue that could significantly affect customer satisfaction.  4. Score Generate an AI evaluation score from 1 to 5.  Rules: - Score must be an integer. - Minimum value: 1 - Maximum value: 5 - Never return a value below 1 or above 5.  5. Rate Validation The customer's original Rate must be validated.  Rules: - Rate must be an integer. - Rate must be between 1 and 5 inclusive. - If Rate is outside this range, treat the input as invalid. - Never modify the customer's original Rate.  6. Issues Identify the main problems mentioned by the customer.  If no problem is mentioned, return: \"No major issues reported\"  Do not invent problems that are not present in the feedback.  7. Recommended_Action Provide a concise and practical action that the restaurant should take based on the customer's feedback.  General rules: - Analyze the actual customer feedback carefully. - Use the customer's Rate as supporting information. - Do not invent information. - Keep the analysis concise and suitable for storing in Google Sheets. - Maintain consistent values across different feedback submissions.  OUTPUT RULES:  Return ONLY valid JSON.  Do not return Markdown. Do not add explanations. Do not add text before or after the JSON.  The JSON must contain exactly these fields:  {   \"Sentiment\": \"\",   \"Category\": \"\",   \"Priority\": \"\",   \"Score\": 0,   \"Issues\": \"\",   \"Recommended_Action\": \"\" }"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        448,
+        0
+      ],
+      "id": "8543be42-4b26-4ac9-8f94-558b00161533",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1s4aizGt1yfpyMloX4wAC_7QOoPNjRv6NCrawynUs5FA",
+          "mode": "list",
+          "cachedResultName": "all",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s4aizGt1yfpyMloX4wAC_7QOoPNjRv6NCrawynUs5FA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 845087398,
+          "mode": "list",
+          "cachedResultName": "الورقة6",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1s4aizGt1yfpyMloX4wAC_7QOoPNjRv6NCrawynUs5FA/edit#gid=845087398"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Customer Name": "={{ $('On form submission').item.json['Customer Name'] }}",
+            "Email": "={{ $('On form submission').item.json.Email }}",
+            "Rate": "={{ $('On form submission').item.json.Rate }}",
+            "FeedBack": "={{ $('On form submission').item.json.FeedBack }}",
+            "Sentiment": "={{ $json.output.Sentiment }}",
+            "Category": "={{ $json.output.Category }}",
+            "Priority": "={{ $json.output.Priority }}",
+            "Score": "={{ $json.output.Score }}",
+            "Issues": "={{ $json.output.Issues }}",
+            "Recommended Action": "={{ $json.output.Recommended_Action }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Rate",
+              "displayName": "Rate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "FeedBack",
+              "displayName": "FeedBack",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sentiment",
+              "displayName": "Sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Issues",
+              "displayName": "Issues",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recommended Action",
+              "displayName": "Recommended Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        816,
+        0
+      ],
+      "id": "00536160-305c-42f2-ad5a-486c87084053",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oLwcqqv6NnKybWgC",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        160
+      ],
+      "id": "1f7fed03-15a7-45b7-8976-f47a31dac917",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"Sentiment\": \"Positive\",\n  \"Category\": \"Food Quality\",\n  \"Priority\": \"Low\",\n  \"Score\": 5,\n  \"Issues\": \"No major issues reported\",\n  \"Recommended_Action\": \"Maintain the current food quality.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        208
+      ],
+      "id": "2c8f188f-8ba6-4866-a62d-35811669a147",
+      "name": "Structured Output Parser"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b429fe0b-7a42-4508-960c-f18f84912529",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bf59a24b5122795c6b3d78b1f7129fe83211aa7fbd79c1e5ae3e68ad2f05cde2"
+  },
+  "nodeGroups": [],
+  "id": "d9ydz4rZUMWxDKdI",
+  "tags": []
+}
